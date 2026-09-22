@@ -1,0 +1,33 @@
+{
+  "name": "progetto-web-rocknbass",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vale-marty/Progetto-Web-RockNBass.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/vale-marty/Progetto-Web-RockNBass/issues"
+  },
+  "homepage": "https://github.com/vale-marty/Progetto-Web-RockNBass#readme",
+  "dependencies": {
+    "dotenv": "^18.0.2",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "express-flash": "^0.0.2",
+    "express-session": "^1.19.0",
+    "morgan": "^1.12.1",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0",
+    "sqlite3": "^6.0.1"
+  }
+}
