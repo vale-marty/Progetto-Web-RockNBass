@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="it">
+<%- include('partials/head') %>
+<body class="d-flex flex-column min-vh-100 bg-dark">
+    <header>
+        <%- include('partials/navbar') %>
+    </header>
+
+    <main class="pt-5 mt-5 bg-dark flex-grow-1">
+        
+        <div class="container py-3 mb-0">
+            <a href="\prodotti" class="text-danger text-decoration-none "><i class="bi bi-arrow-left  pe-2"></i>Catalogo</a>
+            
+        </div>
+
+        <section>
+            <div class="container py-5">
+                <h2 class="text-white mb-4">Il tuo <span class="text-danger">Carrello</span></h2>
+                
+                <div class="row">
+                    <!-- Lista Prodotti -->
+                    <div class="col-lg-8" id="lista-carrello">
+                        <!-- Qui verranno iniettati i prodotti -->
+                    </div>
+
+                    <!-- Riepilogo Totale -->
+                    <div class="col-lg-4">
+                        <div class="bg-dark p-4 rounded border border-secondary text-white shadow">
+                            <h4>Riepilogo</h4>
+                            <hr class="border-secondary">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Totale Prodotti:</span>
+                                <span id="totale-prodotti">€ 0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2" id="row-noleggio">
+                                <span>Totale Noleggi:</span>
+                                <span id="totale-noleggi">€ 0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between fs-4 fw-bold  pt-3">
+                                <span>TOTALE:</span>
+                                <span class="text-danger" id="totale-finale">€ 0.00</span>
+                            </div>
+                            
+                            <!-- MODIFICATO: Rimosso il tag <a> e inserito onclick -->
+                            <button onclick="gestisciCheckout()" class="btn btn-danger w-100 mt-4 py-3 text-uppercase ">
+                                PROCEDI AL CHECKOUT
+                            </button>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <%- include('partials/footer') %>
+
+    <script src="js/carrello.js"></script>
+    <script src="js/main.js"></script>
+    <!--script per modificare l'allert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+</body>
+</html>

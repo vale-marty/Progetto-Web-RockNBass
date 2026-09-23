@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="it">
+<%- include('partials/head') %>
+<body>
+    <header>
+        <%- include('partials/navbar') %>
+    </header>
+
+    <main class="pt-5 mt-5 min-vh-100 reg-page d-flex align-items-center justify-content-center min-vh-100 bg-dark py-4 px-2">
+        <div class="reg-card p-4 p-md-5 rounded shadow-lg ">
+            <div class="text-center mb-4">
+                <img src="assets/images/logo/logo_completo.png" alt="logo" class="mb-4 logo-form">
+                <h2 class="text-danger fw-bold">SCEGLI IL TUO  <span class="text-white">PROSSIMO BASSO</span></h2>
+                <p class="text-white">Registrati ora</p>
+            </div>
+
+            <div class="row g-2 mb-4">
+                <div class="col-6">
+                    <button type="button" id="btnPrivato" class="btn btn-outline-danger w-100 py-3" onclick="selectProfile('privato')">
+                        <i class="bi bi-person-fill d-block fs-3"></i>
+                        PRIVATO
+                    </button>
+                </div>
+                <div class="col-6">
+                    <button type="button" id="btnScuola" class="btn btn-outline-danger w-100 py-3" onclick="selectProfile('scuola')">
+                        <i class="bi bi-mortarboard-fill d-block fs-3"></i>
+                        SCUOLA 
+                    </button>
+                </div>
+            </div>
+
+            <form id="registerForm">
+                <input type="hidden" id="userType" value="privato">
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="text-white-50 small mb-2">Nome Completo</label>
+                        <input type="text" id="regNome" class="form-control bg-dark border-secondary text-white" required placeholder="Mario Rossi">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-white-50 small mb-2">Username</label>
+                        <input type="text" id="regUsername" class="form-control bg-dark border-secondary text-white" required placeholder="rockstar99">
+                    </div>
+
+                    <div id="extraFields" class="row g-3 mx-0 px-0 d-none">
+                        <div class="col-12 mt-3">
+                            <label class="text-danger small mb-2 fw-bold">DETTAGLI SCUOLA</label>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="text-white-50 small mb-2">Ragione Sociale / Nome Scuola</label>
+                            <input type="text" id="regScuolaNome" class="form-control bg-dark border-secondary text-white" placeholder="Accademia del Basso">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-white-50 small mb-2">Partita IVA</label>
+                            <input type="text" id="regPiva" class="form-control bg-dark border-secondary text-white" placeholder="12345678901">
+                        </div>
+                        <div class="col-12">
+                            <label class="text-white-50 small mb-2">Sede Legale (Città, Indirizzo)</label>
+                            <input type="text" id="regSede" class="form-control bg-dark border-secondary text-white" placeholder="Milano, Via delle Note 12">
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="text-white-50 small mb-2">Email</label>
+                        <input type="email" id="regEmail" class="form-control bg-dark border-secondary text-white" required placeholder="mail@esempio.it">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-white-50 small mb-2">Password</label>
+                        <input type="password" id="regPass" class="form-control bg-dark border-secondary text-white" required placeholder="••••••••">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-white-50 small mb-2">Conferma Password</label>
+                        <input type="password" id="regPassConf" class="form-control bg-dark border-secondary text-white" required placeholder="••••••••">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-danger w-100 py-3 mt-4 mb-3  ">CREA ACCOUNT</button>
+                
+                <div class="text-center">
+                    <p class="text-white-50 small">Hai già un account? <a href="login.html" class="text-danger fw-bold text-decoration-none">Accedi qui</a></p>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <%- include('partials/footer') %>
+
+    <script src="js/registrazione.js"></script>
+    <script src="js/main.js"></script>
+    <!--script per modificare l'allert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+</body>
+</html>

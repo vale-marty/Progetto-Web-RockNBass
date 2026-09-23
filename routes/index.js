@@ -48,4 +48,22 @@ router.get('/carrello', (req, res) => {
     });
 });
 
+// Rotta Dettaglio Prodotto Singolo 
+router.get('/prodotto-singolo', (req, res) => {
+    res.render('prodotto-singolo', {
+        title: 'RockNBass - Dettaglio',
+        user: req.user || null,
+        isAuth: req.isAuthenticated()
+    });
+});
+
+// Rotta Pagamento
+router.get('/pagamento', (req, res) => {
+    res.render('pagamento', {
+        title: 'RockNBass - Checkout',
+        user: req.user || null,
+        isAuth: req.isAuthenticated()
+    });
+});
+
 module.exports = router;

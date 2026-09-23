@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="it">
+<%- include('partials/head') %>
+<body>
+    <header>
+        <%- include('partials/navbar') %>
+    </header>
+
+    <main class="pt-5 mt-5 bg-dark min-vh-100">
+        <div class="container py-5">
+            <!-- Bottone per tornare indietro -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb bg-transparent p-0">
+                    <li class="breadcrumb-item">
+                        <a href="prodotti.html" class="text-danger text-decoration-none "><i class="bi bi-arrow-left  pe-2"></i>Catalogo</a>
+                    </li>
+                    <li class="breadcrumb-item active text-white-50 " id="breadcrumb-nome" aria-current="page">
+                        Caricamento...
+                    </li>
+                </ol>
+            </nav>
+
+            <div class="row g-5" id="prodotto-container">
+                <!-- JavaScript caricherà il contenuto qui -->
+                <div class="col-12 d-flex flex-column align-items-center justify-content-center py-5 my-5">
+                <div class="spinner-outer mb-4">
+                    <div class="spinner-border text-danger" role="status" style="width: 3rem; height: 3rem;"></div>
+                </div>
+                <h3 class="text-white fw-light letter-spacing-2">Accordando lo strumento...</h3>
+            </div>
+            </div>
+        </div>
+
+    </main>
+
+    <%- include('partials/footer') %>
+
+    <script src="js/dettaglio.js"></script>
+    <script src="js/main.js"></script>
+    <!--script per modificare l'allert-->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+</body>
+</html>
