@@ -1,3 +1,5 @@
+"use strict";
+
 document.addEventListener('DOMContentLoaded', () => {
     renderRiepilogoCheckout();
 });
@@ -6,12 +8,12 @@ function renderRiepilogoCheckout() {
     const container = document.getElementById('checkout-items');
     const carrello = JSON.parse(localStorage.getItem('carrello_musica')) || [];
     const isScuola = localStorage.getItem('userType') === 'scuola';
-    
+
     let totaleScontato = 0;
     let html = "";
 
     if (carrello.length === 0) {
-        window.location.href = 'carrello.html';
+        window.location.href = '/carrello';
         return;
     }
 
@@ -20,7 +22,7 @@ function renderRiepilogoCheckout() {
         if (item.tipo === 'acquisto' && isScuola) {
             prezzoFinale = item.prezzoUnitario * 0.85;
         }
-        
+
         const subTotaleScontato = prezzoFinale * item.quantita;
         totaleScontato += subTotaleScontato;
 
@@ -36,7 +38,7 @@ function renderRiepilogoCheckout() {
     });
 
     container.innerHTML = html;
-    
+
     const containerSconto = document.getElementById("sconto");
     if (containerSconto) {
         if (isScuola) {
@@ -70,7 +72,7 @@ function confermaOrdine() {
     const cardInput = document.getElementById('payCard');
     const expInput = document.getElementById('payExp');
     const cvcInput = document.getElementById('payCvc');
-    
+
     let isValid = true;
 
     // Reset errori grafici precedenti
@@ -133,23 +135,90 @@ function confermaOrdine() {
     });
 }
 
-// Funzione di supporto per pulire il codice
-function eseguiTransazione(form) {
+async function eseguiTransazione(form) {
     const btn = form.querySelector('button[type="submit"]');
     btn.disabled = true;
     btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Elaborazione...`;
 
-    setTimeout(() => {
+    // 1. Recuperiamo i dati
+    const carrello = JSON.parse(localStorage.getItem('carrello_musica')) || [];
+    const username = localStorage.getItem('username');
+    const isScuola = localStorage.getItem('userType') === 'scuola';
+
+    // 2. Separiamo gli acquisti dai noleggi
+    const prodottiAcquisto = carrello.filter(item => item.tipo === 'acquisto');
+    const prodottiNoleggio = carrello.filter(item => item.tipo === 'noleggio');
+
+    // 3. Calcoliamo il totale solo per gli acquisti
+    let totaleAcquisti = 0;
+    prodottiAcquisto.forEach(item => {
+        let prezzoFinale = item.prezzoUnitario;
+        if (isScuola) {
+            prezzoFinale = item.prezzoUnitario * 0.85; // Sconto 15% per scuole
+        }
+        totaleAcquisti += (prezzoFinale * item.quantita);
+    });
+
+    try {
+        // 4. Se ci sono prodotti da acquistare, inviamo l'ordine
+        if (prodottiAcquisto.length > 0) {
+            const resOrdini = await fetch('/api/ordini', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: username,
+                    totale: totaleAcquisti,
+                    prodotti: prodottiAcquisto
+                })
+            });
+            if (!resOrdini.ok) throw new Error("Errore salvataggio ordine di acquisto");
+        }
+
+        // 5. Se ci sono prodotti da noleggiare, inviamo i contratti di noleggio
+        if (prodottiNoleggio.length > 0) {
+            // Un noleggio potrebbe avere più quantità, oppure esserci più strumenti noleggiati
+            for (const item of prodottiNoleggio) {
+                // Se ha noleggiato 2 quantità dello stesso basso, creiamo 2 contratti separati
+                for (let i = 0; i < item.quantita; i++) {
+                    const resNoleggio = await fetch('/api/noleggi', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: username,
+                            id_prodotto: item.id,
+                            canone_mensile: item.prezzoUnitario,
+                            durata_mesi: 1 // Puoi implementare la scelta dei mesi in futuro, di base 1 mese
+                        })
+                    });
+                    if (!resNoleggio.ok) throw new Error("Errore salvataggio contratto di noleggio");
+                }
+            }
+        }
+
+        // 6. Se tutto è andato a buon fine
         Swal.fire({
             icon: 'success',
-            title: '<span style="color: #fff">Pagamento Autorizzato!</span>',
-            html: '<p style="color: #aaa">Il tuo ordine è in viaggio. Preparati a suonare!</p>',
+            title: 'Pagamento Autorizzato!',
+            html: 'Transazione completata con successo.',
             background: '#151515',
             confirmButtonColor: 'var(--brand-color)',
-            confirmButtonText: 'Ottimo!'
+            confirmButtonText: 'Vai alla Dashboard'
         }).then(() => {
-            localStorage.removeItem('carrello_musica');
-            window.location.href = 'index.html';
+            localStorage.removeItem('carrello_musica'); // Svuotiamo il carrello
+            window.location.href = '/account'; // Rimandiamo all'account
         });
-    }, 2000);
+
+    } catch (error) {
+        console.error(error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Errore',
+            text: 'Impossibile completare la transazione. Riprova più tardi.',
+            background: '#151515',
+            confirmButtonColor: 'var(--brand-color)'
+        });
+        btn.disabled = false;
+        btn.innerHTML = `Paga Ora`;
+    }
 }
+

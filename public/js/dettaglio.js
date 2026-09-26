@@ -1,10 +1,12 @@
+"use strict";
+
 let prodottoCorrente = null; // Variabile globale per questa pagina
 
 document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     const productId = parseInt(params.get('id'));
 
-    fetch('data/prodotti.json')
+    fetch('/api/prodotti')
         .then(response => response.json())
         .then(prodotti => {
             prodottoCorrente = prodotti.find(p => p.id === productId); // Salviamo il prodotto qui

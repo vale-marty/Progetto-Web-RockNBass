@@ -1,3 +1,5 @@
+"use strict";
+
 document.addEventListener('DOMContentLoaded', () => {
     aggiornaNavbarLoggata();
     aggiornaBadgeCarrello();
@@ -12,11 +14,11 @@ function aggiornaNavbarLoggata() {
 
     if (tipoUtente && tipoUtente !== 'ospite') {
         // Cambia la destinazione del link
-        iconaAccount.href = 'account.html'; 
+        iconaAccount.href = '/account'; 
         
     } else {
-        // Se non è loggato punta a login.html
-        iconaAccount.href = 'login.html';
+        // Se non è loggato punta a login
+        iconaAccount.href = '/login';
     }
 }
 

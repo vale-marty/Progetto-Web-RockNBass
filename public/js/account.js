@@ -1,3 +1,5 @@
+"use strict";
+
 document.addEventListener('DOMContentLoaded', () => {
     initAccount();
 });
@@ -8,7 +10,7 @@ const userName = localStorage.getItem('userName') || 'Utente';
 
 function initAccount() {
     if (userType === 'ospite') {
-        window.location.href = 'login.html';
+        window.location.href = '/login';
         return;
     }
 
@@ -80,7 +82,7 @@ function switchSection(sectionId) {
 // 3. LOGICA CATALOGO ADMIN (CON AGGIUNTA COLONNA ID)
 async function renderTableAdmin() {
     try {
-        const response = await fetch('data/prodotti.json');
+        const response = await fetch('/api/prodotti');
         const prodotti = await response.json();
         const tbody = document.getElementById('admin-table-body');
         
@@ -116,7 +118,7 @@ async function apriEditorProdotto(id = null) {
     
     if (id) {
         try {
-            const response = await fetch('data/prodotti.json');
+            const response = await fetch('/api/prodotti');
             const prodotti = await response.json();
             p = prodotti.find(item => item.id === id) || p;
         } catch (e) {
@@ -207,9 +209,36 @@ async function apriEditorProdotto(id = null) {
     });
 
     if (formValues) {
-        console.log("Dati pronti per il salvataggio:", formValues);
-        Swal.fire({ icon: 'success', title: 'Salvataggio riuscito (Simulazione)', background: '#151515', color: '#fff' });
-        renderTableAdmin(); // Ricarica la tabella per vedere subito le modifiche (se presenti nel master)
+        // Chiamata al database per salvare o aggiornare
+        try {
+            const response = await fetch('/api/admin/prodotti', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formValues)
+            });
+
+            if (response.ok) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Prodotto salvato!',
+                    background: '#151515',
+                    color: '#fff',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+                renderTableAdmin(); // Aggiorna la tabella leggendo i nuovi dati dal DB
+            } else {
+                throw new Error("Errore nel salvataggio");
+            }
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Errore',
+                text: 'Impossibile salvare il prodotto.',
+                background: '#151515',
+                color: '#fff'
+            });
+        }
     }
 }
 
@@ -229,14 +258,46 @@ function aggiungiRigaSpecifica() {
 function eliminaProdotto(id) {
     Swal.fire({
         title: `Eliminare il prodotto #${id}?`,
+        text: "Questa azione non può essere annullata!",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: 'var(--brand-color)',
+        cancelButtonColor: '#333',
+        confirmButtonText: 'Sì, elimina',
+        cancelButtonText: 'Annulla',
         background: '#151515',
         color: '#fff'
-    }).then((result) => {
+    }).then(async (result) => {
         if (result.isConfirmed) {
-            Swal.fire({ title: 'Eliminato! (Simulazione)', icon: 'success', background: '#151515', color: '#fff' });
+            try {
+                // Chiamata al database per eliminare
+                const response = await fetch(`/api/admin/prodotti/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    Swal.fire({
+                        title: 'Eliminato!',
+                        text: 'Il prodotto è stato rimosso dal catalogo.',
+                        icon: 'success',
+                        background: '#151515',
+                        color: '#fff',
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                    renderTableAdmin(); // Ricarica la tabella senza il prodotto eliminato
+                } else {
+                    throw new Error("Errore nell'eliminazione");
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Errore',
+                    text: 'Impossibile eliminare il prodotto.',
+                    background: '#151515',
+                    color: '#fff'
+                });
+            }
         }
     });
 }
@@ -245,8 +306,8 @@ function eliminaProdotto(id) {
 async function renderOrdini() {
     try {
         const [resOrdini, resProdotti] = await Promise.all([
-            fetch('data/ordini.json'),
-            fetch('data/prodotti.json')
+            fetch('/api/ordini'),
+            fetch('/api/prodotti')
         ]);
         
         const ordini = await resOrdini.json();
@@ -288,7 +349,8 @@ async function renderOrdini() {
                     <tbody>
                         ${ordiniFiltrati.map(o => {
                             const infoOrdineProdotto = o.prodotti[0];
-                            const prodottoDettaglio = prodotti.find(p => p.id === infoOrdineProdotto.id_prodotto);
+                            const idCercato = infoOrdineProdotto.id_prodotto || infoOrdineProdotto.id;
+                            const prodottoDettaglio = prodotti.find(p => p.id === Number(idCercato));
                             
                             const marca = prodottoDettaglio ? prodottoDettaglio.marca : "Strumento";
                             const modello = prodottoDettaglio ? prodottoDettaglio.modello : "Non più a catalogo";
@@ -341,8 +403,8 @@ async function renderNoleggi() {
     try {
         // 1. Scarichiamo contemporaneamente sia i noleggi che i prodotti
         const [resNoleggi, resProdotti] = await Promise.all([
-            fetch('data/noleggi.json'),
-            fetch('data/prodotti.json')
+            fetch('/api/noleggi'),
+            fetch('/api/prodotti')
         ]);
         
         const noleggi = await resNoleggi.json();
@@ -424,7 +486,7 @@ async function renderNoleggi() {
 // 7. RENDERING RICHIESTE FORM (ESCLUSIVO ADMIN)
 async function renderRichieste() {
     try {
-        const response = await fetch('data/richieste.json');
+        const response = await fetch('/api/admin/richieste');
         const richieste = await response.json();
         const sectionContatti = document.getElementById('section-contatti');
 
@@ -441,18 +503,21 @@ async function renderRichieste() {
             return;
         }
 
+        // Calcoliamo quanti messaggi hanno il valore letta a 0
+        const messaggiDaLeggere = richieste.filter(r => r.letta === 0).length;
+
         sectionContatti.innerHTML = `
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3>Richieste Form Contatti</h3>
-                <span class="badge bg-danger">${richieste.length} Nuovi Messaggi</span>
+                ${messaggiDaLeggere > 0 ? `<span class="badge bg-danger">${messaggiDaLeggere} Nuovi Messaggi</span>` : '<span class="badge bg-secondary">Nessun nuovo messaggio</span>'}
             </div>
             <div class="row g-4">
                 ${richieste.map(r => `
                     <div class="col-12">
-                        <div class="card bg-black border-secondary shadow-sm">
+                        <div class="card bg-black border-secondary shadow-sm ${r.letta ? 'opacity-75' : ''}">
                             <div class="card-header border-secondary bg-dark d-flex justify-content-between align-items-center py-3">
                                 <div>
-                                    <span class="badge bg-danger text-uppercase mb-1" style="font-size: 0.7rem;">${r.motivo || 'Info'}</span>
+                                    <span class="badge ${r.letta ? 'bg-secondary' : 'bg-danger'} text-uppercase mb-1" style="font-size: 0.7rem;">${r.motivo || 'Info'}</span>
                                     <h5 class="text-white mb-0">${r.nome}</h5>
                                 </div>
                                 <div class="text-end">
@@ -463,19 +528,20 @@ async function renderRichieste() {
                             <div class="card-body">
                                 <div class="row align-items-center">
                                     <div class="col-md-9">
-                                        <p class="text-white-50 mb-0 p-3 rounded bg-dark border-start border-danger border-4">
+                                        <p class="text-white-50 mb-0 p-3 rounded bg-dark border-start ${r.letta ? 'border-secondary' : 'border-danger'} border-4">
                                             "${r.messaggio}"
                                         </p>
                                     </div>
                                     <div class="col-md-3 mt-3 mt-md-0 text-md-end border-start border-secondary border-opacity-25">
                                         <label class="small text-white-50 d-block">Contatto Rapido:</label>
                                         <a href="tel:${r.telefono}" class="text-white text-decoration-none fw-bold">
-                                            <i class="bi bi-telephone me-2 text-danger"></i>${r.telefono}
+                                            <i class="bi bi-telephone me-2 ${r.letta ? 'text-secondary' : 'text-danger'}"></i>${r.telefono}
                                         </a>
                                         <div class="mt-3">
-                                            <button class="btn btn-sm btn-outline-success me-2" onclick="segnaComeLetta(${r.id})">
-                                                <i class="bi bi-check2-all"></i> Letta
-                                            </button>
+                                            ${r.letta === 0 
+                                                ? `<button class="btn btn-sm btn-outline-success me-2" onclick="segnaComeLetta(${r.id})"><i class="bi bi-check2-all"></i> Letta</button>` 
+                                                : `<span class="badge bg-success me-2"><i class="bi bi-check2-all"></i> Già letta</span>`
+                                            }
                                             <button class="btn btn-sm btn-outline-danger" onclick="eliminaRichiesta(${r.id})">
                                                 <i class="bi bi-trash"></i>
                                             </button>
@@ -493,6 +559,45 @@ async function renderRichieste() {
     }
 }
 
+// Funzione per segnare come letta (assicurati che rimanga intatta)
+async function segnaComeLetta(id) {
+    try {
+        const res = await fetch(`/api/admin/richieste/${id}/letta`, { method: 'PUT' });
+        if (res.ok) {
+            renderRichieste(); // Ricarica la tabella
+        }
+    } catch (error) {
+        console.error("Errore:", error);
+    }
+}
+
+// NUOVA Funzione per eliminare la richiesta
+async function eliminaRichiesta(id) {
+    const result = await Swal.fire({
+        title: 'Eliminare il messaggio?',
+        text: "L'operazione è irreversibile.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: 'var(--brand-color)',
+        cancelButtonColor: '#333',
+        confirmButtonText: 'Sì, elimina',
+        cancelButtonText: 'Annulla',
+        background: '#151515',
+        color: '#fff'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            const res = await fetch(`/api/admin/richieste/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                renderRichieste(); // Ricarica la tabella senza il messaggio eliminato
+            }
+        } catch (error) {
+            console.error("Errore eliminazione:", error);
+        }
+    }
+}
+
 // MODIFICA STATO ORDINE (ESCLUSIVA ADMIN)
 async function modificaStatoOrdine(idOrdine, statoAttuale) {
     const { value: nuovoStato } = await Swal.fire({
@@ -504,34 +609,29 @@ async function modificaStatoOrdine(idOrdine, statoAttuale) {
             'Annullato': 'Annullato'
         },
         inputValue: statoAttuale,
-        inputPlaceholder: 'Seleziona uno stato',
         background: '#151515',
         color: '#fff',
         showCancelButton: true,
         confirmButtonColor: 'var(--brand-color)',
-        confirmButtonText: 'Aggiorna Stato',
-        cancelButtonText: 'Annulla',
-        inputValidator: (value) => {
-            if (!value) {
-                return 'Devi selezionare uno stato valido!';
-            }
-        }
+        confirmButtonText: 'Aggiorna Stato'
     });
 
-    if (nuovoStato) {
-        console.log(`Ordine #${idOrdine} aggiornato a: ${nuovoStato}`);
-        
-        // Mostriamo il feedback di successo
-        await Swal.fire({
-            icon: 'success',
-            title: 'Stato aggiornato! (Simulazione)',
-            text: `L'ordine #${idOrdine} è ora "${nuovoStato}"`,
-            background: '#151515',
-            color: '#fff'
-        });
-
-        // Ricarichiamo la tabella per mostrare le modifiche a schermo
-        renderOrdini();
+    if (nuovoStato && nuovoStato !== statoAttuale) {
+        try {
+            // Chiamata all'API per salvare il nuovo stato
+            const res = await fetch(`/api/ordini/${idOrdine}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ stato: nuovoStato })
+            });
+            
+            if (res.ok) {
+                await Swal.fire({ icon: 'success', title: 'Stato aggiornato!', background: '#151515', color: '#fff' });
+                renderOrdini(); // Ricarica la tabella
+            }
+        } catch (error) {
+            console.error("Errore modifica stato:", error);
+        }
     }
 }
 
@@ -541,5 +641,5 @@ function logout() {
     localStorage.removeItem('nomeUtente');
     localStorage.removeItem('userType');
     
-    window.location.href = 'index.html';
+    window.location.href = '/';
 }

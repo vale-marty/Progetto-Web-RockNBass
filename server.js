@@ -7,9 +7,14 @@ const session = require("express-session");
 const passport = require("passport");
 const morgan = require("morgan");
 const flash = require("express-flash");
+const { initDB } = require('./db/database');
 
 // Importazione rotte
 const indexRouter = require('./routes/index');
+const authRouter = require('./routes/auth');
+const adminRouter = require('./routes/admin');
+const ordiniRouter = require('./routes/ordini');
+const noleggiRouter = require('./routes/noleggi');
 
 // Inizializzazione applicazione Express
 const app = express();
@@ -52,8 +57,16 @@ app.use((req, res, next) => {
 
 // Configurazione rotte
 app.use('/', indexRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/admin', adminRouter);
+app.use('/api/ordini', ordiniRouter);
+app.use('/api/noleggi', noleggiRouter);
 
-// Accensione del Server
-app.listen(PORT, () => {
-  console.log(`🚀 Server avviato su http://localhost:${PORT}`);
+// Accensione del Server e del Database in sequenza
+initDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server avviato su http://localhost:${PORT}`);
+  });
+}).catch((err) => {
+  console.error("❌ Errore critico nell'avvio del database:", err);
 });

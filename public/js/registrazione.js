@@ -1,3 +1,5 @@
+"use strict";
+
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('registerForm');
     if (form) {
@@ -126,7 +128,7 @@ function validazioneRegistrazione(event) {
         isValid = false;
     }
 
-    // Se qualcosa è andato storto, mostriamo l'errore in stile pagamento
+    // Se qualcosa è andato storto, mostriamo l'errore 
     if (!isValid) {
         Swal.fire({
             icon: 'error',
@@ -138,27 +140,63 @@ function validazioneRegistrazione(event) {
         return;
     }
 
-    // 2. SIMULAZIONE CARICAMENTO E CREAZIONE ACCOUNT
+    // 2. INVIO REALE DEI DATI AL SERVER
     const submitBtn = form.querySelector('button[type="submit"]');
     const testoOriginale = submitBtn.innerHTML;
     submitBtn.disabled = true;
     submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Creazione profilo...`;
 
-    setTimeout(() => {
-        // Salviamo il tipo utente nel localStorage per simulare il login andato a buon fine
-        localStorage.setItem('userType', userType);
-        localStorage.setItem('userName', document.getElementById('regNome').value);
+    // Creiamo un oggetto con i dati del form
+    const formData = {
+        userType: userType,
+        nome: document.getElementById('regNome').value.trim(),
+        username: document.getElementById('regUsername').value.trim(),
+        email: emailInput.value.trim(),
+        password: passInput.value,
+        partita_iva: pivaInput ? pivaInput.value.trim() : null,
+        sede_legale: document.getElementById('regSede') ? document.getElementById('regSede').value.trim() : null
+    };
 
+    // Facciamo la chiamata POST alla nostra nuova rotta
+    fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(async (response) => {
+        const data = await response.json();
+        
+        if (!response.ok) {
+            // Se il server ci restituisce un errore (es. email già in uso)
+            throw new Error(data.error || "Errore durante la registrazione");
+        }
+
+        // Se va tutto bene, mostriamo il successo
         Swal.fire({
             icon: 'success',
-            title: '<span style="color: #fff">Profilo Creato!</span>',
-            html: '<p style="color: #aaa">Benvenuto nella nostra rete musicale. Il tuo account è attivo!</p>',
+            title: 'Profilo Creato!',
+            html: 'Benvenuto nella nostra rete musicale. Il tuo account è attivo!',
             background: '#151515',
             confirmButtonColor: 'var(--brand-color)',
-            confirmButtonText: 'Inizia a Suonare'
+            confirmButtonText: 'Vai al Login'
         }).then(() => {
-            // Reindirizzamento alla homepage o al carrello
-            window.location.href = 'account.html';
+            // Mandiamo l'utente a fare il login vero e proprio
+            window.location.href = '/login'; 
         });
-    }, 1800);
+    })
+    .catch((error) => {
+        // Ripristiniamo il bottone in caso di errore
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = testoOriginale;
+        
+        Swal.fire({
+            icon: 'error',
+            title: 'Ops!',
+            text: error.message,
+            background: '#151515',
+            confirmButtonColor: 'var(--brand-color)'
+        });
+    });
 }

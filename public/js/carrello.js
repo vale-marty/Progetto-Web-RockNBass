@@ -1,3 +1,5 @@
+"use strict";
+
 function renderCarrello() {
     const container = document.getElementById('lista-carrello');
     const carrello = getCarrello();
@@ -123,7 +125,7 @@ function gestisciCheckout() {
                 cancelButtonText: 'Annulla'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    window.location.href = 'login.html'; 
+                    window.location.href = '/login'; 
                 }
             });
         } else {
@@ -131,13 +133,13 @@ function gestisciCheckout() {
             // per evitare che l'utente clicchi a vuoto senza capire cosa succede
             const procedi = confirm("Accesso richiesto: Devi effettuare l'accesso o registrarti per completare l'acquisto. Vuoi andare al login?");
             if (procedi) {
-                window.location.href = 'login.html';
+                window.location.href = '/login';
             }
         }
         
     } else {
         // Se è loggato (scuola o privato), va alla pagina di pagamento
-        window.location.href = 'pagamento.html';
+        window.location.href = '/pagamento';
     }
 }
 

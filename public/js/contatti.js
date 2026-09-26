@@ -1,3 +1,5 @@
+"use strict";
+
 document.addEventListener('DOMContentLoaded', () => {
     const contactForm = document.getElementById('contactForm');
     
@@ -9,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-function inviaMessaggio() {
+async function inviaMessaggio() {
     const form = document.getElementById('contactForm');
 
     // 1. VALIDAZIONE NATIVA (Attiva i fumetti del browser)
@@ -55,27 +57,53 @@ function inviaMessaggio() {
         return;
     }
 
-    // 3. SIMULAZIONE INVIO (Loading)
+    // 3. INVIO DEI DATI AL SERVER
     const btn = form.querySelector('button[type="submit"]');
     const originalText = btn.innerHTML;
     
     btn.disabled = true;
     btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> INVIO IN CORSO...`;
 
-    // Simuliamo una chiamata al server di 1.5 secondi
-    setTimeout(() => {
-        Swal.fire({
-            icon: 'success',
-            title: '<span style="color: #fff">Messaggio Inviato!</span>',
-            html: `<p style="color: #aaa">Grazie ${nome}, ti risponderemo al più presto per la tua richiesta di <b>${motivo}</b>.</p>`,
-            background: '#151515',
-            confirmButtonColor: 'var(--brand-color)',
-            confirmButtonText: 'Ottimo'
-        }).then(() => {
-            // Reset del form e del bottone
-            form.reset();
-            btn.disabled = false;
-            btn.innerHTML = originalText;
+    try {
+        const response = await fetch('/api/contatti', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                nome: nome,
+                telefono: telefono,
+                email: email,
+                motivo: motivo,
+                messaggio: messaggio
+            })
         });
-    }, 1500);
+
+        if (response.ok) {
+            Swal.fire({
+                icon: 'success',
+                title: '<span style="color: #fff">Messaggio Inviato!</span>',
+                html: `<p style="color: #aaa">Grazie ${nome}, ti risponderemo al più presto per la tua richiesta di <b>${motivo}</b>.</p>`,
+                background: '#151515',
+                confirmButtonColor: 'var(--brand-color)',
+                confirmButtonText: 'Ottimo'
+            }).then(() => {
+                // Reset del form e del bottone
+                form.reset();
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            });
+        } else {
+            throw new Error("Il server non ha elaborato la richiesta");
+        }
+    } catch (error) {
+        console.error("Errore invio modulo:", error);
+        Swal.fire({
+            icon: 'error',
+            title: '<span style="color: #fff">Errore</span>',
+            text: 'Impossibile inviare il messaggio in questo momento. Riprova più tardi.',
+            background: '#151515',
+            confirmButtonColor: 'var(--brand-color)'
+        });
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
 }

@@ -1,8 +1,10 @@
+"use strict";
+
 let prodottiMaster = [];
 let macroCategoriaAttiva = 'all'; // Stato per i tab (Bassi, Ampli, ecc.)
 
 document.addEventListener('DOMContentLoaded', () => {
-    fetch('data/prodotti.json')
+    fetch('/api/prodotti')
         .then(response => {
             if (!response.ok) throw new Error("Errore caricamento JSON");
             return response.json();
@@ -11,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
             prodottiMaster = data;
             initFiltri();
             
-            // AGGIUNTA: Forza l'aggiornamento del select all'avvio
+            // Forza l'aggiornamento del select all'avvio
             aggiornaOpzioniSelect('all'); 
             
             mostraProdotti(data);
@@ -33,17 +35,17 @@ function initFiltri() {
 
     filterTabs.forEach(tab => {
         tab.addEventListener('click', (e) => {
-            // 1. Gestione estetica: toglie 'active' da tutti e lo mette a quello cliccato
+            // Gestione estetica: toglie 'active' da tutti e lo mette a quello cliccato
             filterTabs.forEach(t => t.classList.remove('active'));
             e.target.classList.add('active');
             
-            // 2. Aggiorna la variabile globale con la macro-categoria scelta (es. "bassi")
+            // Aggiorna la variabile globale con la macro-categoria scelta (es. "bassi")
             macroCategoriaAttiva = e.target.getAttribute('data-macro');
 
-            // 3. AGGIUNTA: Cambia le opzioni dentro il select in base a cosa hai cliccato
+            // Cambia le opzioni dentro il select in base a cosa hai cliccato
             aggiornaOpzioniSelect(macroCategoriaAttiva);
             
-            // 4. Riesegue il filtro per mostrare i prodotti corretti
+            // Riesegue il filtro per mostrare i prodotti corretti
             filtraRisultati();
         });
     });
@@ -121,18 +123,18 @@ function filtraRisultati() {
 
 
     const prodottiFiltrati = prodottiMaster.filter(prodotto => {
-        // 1. Filtro Macro-Categoria
+        // Filtro Macro-Categoria
         const matchMacro = (macroCategoriaAttiva === 'all') || (prodotto.macro_categoria === macroCategoriaAttiva);
 
-        // 2. Filtro Noleggio 
+        // Filtro Noleggio 
         const prezzoNoleggio = prodotto.prezzo_noleggio_mensile || (prodotto.prezzo * 0.05);
         const matchPrezzo = prezzoNoleggio <= maxRent;
 
-        // 3. Filtro Noleggio 
+        // Filtro Noleggio 
         const prezzoAcquisto = prodotto.prezzo;
         const matchPrezzoAcq = prezzoAcquisto <= maxPrice;
 
-        // 4. Filtro Sottocategoria o Marca dal SELECT
+        // Filtro Sottocategoria o Marca dal SELECT
         let matchTag = false;
         if (selectedTag === 'all') {
             matchTag = true;
@@ -152,19 +154,19 @@ function filtraRisultati() {
             matchTag = marcaProdotto.includes(selectedTag) || categorieProdotto.includes(selectedTag);
         }
 
-        // 5. RICERCA TESTUALE (Logica corretta)
+        // RICERCA TESTUALE 
         let matchTesto = true;
         if (query !== "") {
             const marca = prodotto.marca.toLowerCase();
             const modello = prodotto.modello.toLowerCase();
             const tags = (prodotto.tags || []).map(t => t.toLowerCase());
 
-            // Controlliamo se la query è ESATTAMENTE la marca o l'inizio del modello
+            // Controllo se la query è ESATTAMENTE la marca o l'inizio del modello
             const queryInMarca = marca.includes(query);
             const queryInModello = modello.includes(query);
             const queryInTags = tags.some(t => t.includes(query));
 
-            // Solo se non trova nulla in marca/modello/tag, cerchiamo nella descrizione
+            // Solo se non trova nulla in marca/modello/tag, cerco nella descrizione
             // ma in modo molto restrittivo (solo come parola isolata)
             const regexDesc = new RegExp('\\b' + query + '\\b', 'i');
             const queryInDescrizione = regexDesc.test(prodotto.descrizione);
@@ -179,11 +181,11 @@ function filtraRisultati() {
 }
 
 function resetFiltri() {
-    // 1. Svuota solo il campo di ricerca testuale
+    // Svuota solo il campo di ricerca testuale
     const searchInput = document.getElementById('searchInput');
     if (searchInput) searchInput.value = '';
 
-    // 2. Riporta lo slider del prezzo al massimo
+    // Riporta lo slider del prezzo al massimo
     const rentRange = document.getElementById('rentRange');
     if (rentRange) {
         rentRange.value = 700; 
@@ -198,12 +200,12 @@ function resetFiltri() {
         if (priceLabel) priceLabel.innerText = `€10000`;
     }
 
-    // 3. Ripristina il select delle sottocategorie su "Tutti"
-    // NOTA: Non chiamiamo aggiornaOpzioniSelect perché vogliamo mantenere le opzioni della categoria in cui ci troviamo (Bassi, Ampli, ecc.)
+    // Ripristina il select delle sottocategorie su "Tutti"
+    // Non chiamo aggiornaOpzioniSelect perché voglio mantenere le opzioni della categoria in cui ci troviamo (Bassi, Ampli, ecc.)
     const filterTag = document.getElementById('filterTag');
     if (filterTag) filterTag.value = 'all';
 
-    // 4. Eseguiamo il filtraggio
+    // Eseguiamo il filtraggio
     // macroCategoriaAttiva NON viene toccata, quindi resta quella corrente
     filtraRisultati();
 }
@@ -250,7 +252,7 @@ function mostraProdotti(listaProdotti) {
                                 `<small class="text-danger-emphasis">Solo acquisto</small>`
                             }
                         </div>
-                        <a href="prodotto-singolo.html?id=${prodotto.id}" class="btn btn-danger btn-sm shadow-sm">DETTAGLI</a>
+                        <a href="/prodotto-singolo?id=${prodotto.id}" class="btn btn-danger btn-sm shadow-sm">DETTAGLI</a>
                     </div>
                 </div>
             </div>
@@ -258,7 +260,7 @@ function mostraProdotti(listaProdotti) {
         
         card.addEventListener('click', (e) => {
             if(!e.target.classList.contains('btn')) {
-                window.location.href = `prodotto-singolo.html?id=${prodotto.id}`;
+                window.location.href = `/prodotto-singolo?id=${prodotto.id}`;
             }
         });
 

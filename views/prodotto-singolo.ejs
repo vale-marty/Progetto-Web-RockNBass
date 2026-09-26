@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="it">
 <%- include('partials/head') %>
-<body>
+<body class="d-flex flex-column min-vh-100 bg-dark">
     <header>
         <%- include('partials/navbar') %>
     </header>
 
-    <main class="pt-5 mt-5 bg-dark min-vh-100">
+    <main class="pt-5 mt-5 bg-dark flex-grow-1">
         <div class="container py-5">
             <!-- Bottone per tornare indietro -->
             <nav aria-label="breadcrumb" class="mb-4">
                 <ol class="breadcrumb bg-transparent p-0">
                     <li class="breadcrumb-item">
-                        <a href="prodotti.html" class="text-danger text-decoration-none "><i class="bi bi-arrow-left  pe-2"></i>Catalogo</a>
+                        <a href="\prodotti" class="text-danger text-decoration-none "><i class="bi bi-arrow-left  pe-2"></i>Catalogo</a>
                     </li>
                     <li class="breadcrumb-item active text-white-50 " id="breadcrumb-nome" aria-current="page">
                         Caricamento...

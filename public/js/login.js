@@ -1,48 +1,56 @@
+"use strict";
+
 document.getElementById('loginForm').addEventListener('submit', function(e) {
     e.preventDefault();
-
-    const userIn = document.getElementById('username').value;
+    
+    const userIn = document.getElementById('username').value.trim();
     const passIn = document.getElementById('password').value;
-
-    fetch('data/users.json')
-        .then(res => res.json())
-        .then(users => {
-            // Cerchiamo l'utente nel file JSON
-            const userFound = users.find(u => u.username === userIn && u.password === passIn);
-
-            if (userFound) {
-                // SALVIAMO I DATI NEL LOCALSTORAGE
-                localStorage.setItem('isLogged', 'true');
-                localStorage.setItem('username', userFound.username);
-                localStorage.setItem('nomeUtente', userFound.nome);
-                localStorage.setItem('userType', userFound.userType);
-
-                // Alert di successo con SweetAlert
-                Swal.fire({
-                    icon: 'success',
-                    title: `<span style="color: #fff">Bentornato ${userFound.nome}!</span>`,
-                    text: 'Accesso eseguito con successo. Reindirizzamento in corso...',
-                    background: '#151515',
-                    showConfirmButton: false,
-                    timer: 2000,
-                    timerProgressBar: true
-                }).then(() => {
-                    window.location.href = 'account.html';
-                });
-
-            } else {
-                // Alert di errore
-                Swal.fire({
-                    icon: 'error',
-                    title: '<span style="color: #fff">Accesso Negato</span>',
-                    text: 'Username o Password non corretti. Riprova, rockstar!',
-                    background: '#151515',
-                    confirmButtonColor: 'var(--brand-color)'
-                });
-            }
-        })
-        .catch(err => console.error("Errore nel caricamento del database utenti:", err));
-})
+    
+    // Effettua la chiamata POST alla nostra nuova API di autenticazione
+    fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username: userIn, password: passIn })
+    })
+    .then(async response => {
+        const data = await response.json();
+        
+        if (!response.ok) {
+            // Lancia un errore catturabile dal catch qui sotto
+            throw new Error(data.error || "Errore di accesso");
+        }
+        
+        // LOGIN AVVENUTO: Salviamo alcuni dati non sensibili nel localStorage 
+        // per far funzionare l'interfaccia (navbar, carrello, ecc.)
+        localStorage.setItem('isLogged', 'true');
+        localStorage.setItem('username', data.user.username);
+        localStorage.setItem('nomeUtente', data.user.nome);
+        localStorage.setItem('userType', data.user.ruolo);
+        
+        Swal.fire({
+            icon: 'success',
+            title: `Bentornato ${data.user.nome}!`,
+            text: 'Accesso eseguito con successo. Reindirizzamento in corso...',
+            background: '#151515',
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true
+        }).then(() => {
+            window.location.href = '/account'; 
+        });
+    })
+    .catch(err => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Accesso Negato',
+            text: err.message, // Mostrerà "Password non corretta" o "Username non trovato"
+            background: '#151515',
+            confirmButtonColor: 'var(--brand-color)'
+        });
+    });
+});
 
 
 // --- ALLERT RECUPERO PASSWORD --- //
