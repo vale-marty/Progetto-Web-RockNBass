@@ -6,7 +6,6 @@ require("dotenv").config();
 const session = require("express-session");
 const passport = require("passport");
 const morgan = require("morgan");
-const flash = require("express-flash");
 const { initDB } = require('./db/database');
 
 // Importazione rotte
@@ -42,14 +41,12 @@ app.use(session({
   }
 }));
 
-// Attivo Passport (per il login) e Flash (per i messaggi di errore/successo)
-app.use(flash());
+// Attivo Passport (per il login) 
 app.use(passport.initialize());
 app.use(passport.session());
 
 // Variabili Globali: rende disponibili le informazioni dell'utente in tutti i file .ejs
 app.use((req, res, next) => {
-  res.locals.messages = req.flash();
   res.locals.user = req.user || null;
   res.locals.isAuth = req.isAuthenticated();
   next();
