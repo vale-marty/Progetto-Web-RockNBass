@@ -3,6 +3,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     aggiornaNavbarLoggata();
     aggiornaBadgeCarrello();
+    impostaNavAttiva();
 });
 
 function aggiornaNavbarLoggata() {
@@ -40,4 +41,20 @@ function aggiornaBadgeCarrello() {
     } else {
         badge.style.display = 'none';
     }
+}
+
+// FUNZIONE PER EVIDENZIARE LA PAGINA ATTUALE NELLA NAVBAR
+function impostaNavAttiva() {
+    const currentPath = window.location.pathname;
+    const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+    
+    navLinks.forEach(link => {
+        // Rimuove la classe da tutti
+        link.classList.remove('active');
+        
+        // La aggiunge solo se l'href del link coincide con l'URL della pagina
+        if (link.getAttribute('href') === currentPath) {
+            link.classList.add('active');
+        }
+    });
 }

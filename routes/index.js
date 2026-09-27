@@ -2,9 +2,9 @@
 
 const express = require('express');
 const router = express.Router();
-// Librerire per leggere il database
-const sqlite = require('sqlite');
-const sqlite3 = require('sqlite3');
+
+const prodottoDao = require('../dao/prodottoDao');
+const richiestaDao = require('../dao/richiestaDao');
 
 // Rotta Home Page
 router.get('/', (req, res) => {
@@ -99,26 +99,7 @@ router.get('/account', (req, res) => {
 // Rotta API per ottenere tutti i prodotti dal database
 router.get('/api/prodotti', async (req, res) => {
     try {
-        // Aprire la connessione al database
-        const db = await sqlite.open({
-            filename: './db/rocknbass.sqlite',
-            driver: sqlite3.Database
-        });
-
-        // Prendere tutte le righe dalla tabella prodotti
-        const prodotti = await db.all('SELECT * FROM prodotti');
-
-        // Riconvertire le stringhe di testo in Array e Oggetti per non rompere i filtri
-        const prodottiFormattati = prodotti.map(p => {
-            return {
-                ...p,
-                categoria: JSON.parse(p.categoria),
-                tags: JSON.parse(p.tags),
-                specifiche: JSON.parse(p.specifiche)
-            };
-        });
-
-        // Invia i dati al frontend
+        const prodottiFormattati = await prodottoDao.tuttiIProdotti();
         res.json(prodottiFormattati);
     } catch (error) {
         console.error("Errore API prodotti:", error);
@@ -130,18 +111,7 @@ router.get('/api/prodotti', async (req, res) => {
 router.post('/api/contatti', async (req, res) => {
     try {
         const { nome, telefono, email, motivo, messaggio } = req.body;
-        const dataOdierna = new Date().toLocaleDateString('it-IT');
-        
-        const db = await sqlite.open({
-            filename: './db/rocknbass.sqlite',
-            driver: sqlite3.Database
-        });
-
-        await db.run(`
-            INSERT INTO richieste (nome, telefono, email, motivo, messaggio, data)
-            VALUES (?, ?, ?, ?, ?, ?)
-        `, [nome, telefono, email, motivo, messaggio, dataOdierna]);
-
+        await richiestaDao.creaRichiesta(nome, telefono, email, motivo, messaggio);
         res.status(201).json({ message: "Messaggio inviato con successo!" });
     } catch (error) {
         console.error("Errore salvataggio contatto:", error);
