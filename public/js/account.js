@@ -400,87 +400,106 @@ async function renderOrdini() {
 
 // 6. RENDERING DEI NOLEGGI (CON RECUPERO DATI DA PRODOTTI.JSON)
 async function renderNoleggi() {
-    try {
-        // 1. Scarichiamo contemporaneamente sia i noleggi che i prodotti
-        const [resNoleggi, resProdotti] = await Promise.all([
-            fetch('/api/noleggi'),
-            fetch('/api/prodotti')
-        ]);
-        
-        const noleggi = await resNoleggi.json();
-        const prodotti = await resProdotti.json();
-        
-        const sectionNoleggi = document.getElementById('section-noleggi');
-        const currentUsername = localStorage.getItem('username');
+  try {
+    // Scarico contemporaneamente sia i noleggi che i prodotti
+    const [resNoleggi, resProdotti] = await Promise.all([
+      fetch('/api/noleggi'),
+      fetch('/api/prodotti')
+    ]);
+    const noleggi = await resNoleggi.json();
+    const prodotti = await resProdotti.json();
+    const sectionNoleggi = document.getElementById('section-noleggi');
+    const currentUsername = localStorage.getItem('username');
 
-        // L'admin vede tutto l'inventario dei noleggi; la scuola vede solo i suoi
-        const noleggiFiltrati = userType === 'admin' 
-            ? noleggi 
-            : noleggi.filter(n => n.username === currentUsername);
+    // L'admin vede tutto l'inventario dei noleggi; la scuola vede solo i suoi
+    const noleggiFiltrati = userType === 'admin' ? noleggi : noleggi.filter(n => n.username === currentUsername);
 
-        if (noleggiFiltrati.length === 0) {
-            sectionNoleggi.innerHTML = `
-                <h3>Gestione Noleggi</h3>
-                <div class="bg-black p-4 rounded border border-secondary text-white-50 text-center">
-                    <i class="bi bi-calendar-x fs-1 d-block mb-3"></i> Nessun noleggio attivo.
-                </div>
-            `;
-            return;
-        }
-
-        sectionNoleggi.innerHTML = `
-            <h3>Gestione Noleggi</h3>
-            <div class="table-responsive bg-black p-3 rounded border border-secondary">
-                <table class="table table-dark table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th>ID Noleggio</th>
-                            ${userType === 'admin' ? '<th>Cliente</th>' : ''}
-                            <th>Strumento</th>
-                            <th>Periodo</th>
-                            <th>Rata Mensile</th>
-                            <th>Stato</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${noleggiFiltrati.map(n => {
-                            // 2. Cerchiamo il prodotto corrispondente nel catalogo prodotti usando l'id_prodotto
-                            const infoProdotto = prodotti.find(p => p.id === n.id_prodotto);
-                            
-                            // Se il prodotto viene trovato creiamo una stringa con Marca + Modello, altrimenti usiamo un fallback
-                            const nomeStrumento = infoProdotto 
-                                ? `${infoProdotto.marca} - ${infoProdotto.modello}` 
-                                : "Strumento Sconosciuto";
-                            
-                            // Opzionale: possiamo recuperare anche l'immagine per fare una riga simile a quella dell'admin
-                            const urlImmagine = infoProdotto?.immagine || 'https://via.placeholder.com/40';
-
-                            return `
-                                <tr>
-                                    <td data-label="ID Noleggio" class="text-white-50 fw-bold">#${n.id_noleggio}</td>
-                                    ${userType === 'admin' ? `<td data-label="Cliente"><span class="badge bg-secondary">${n.username}</span></td>` : ''}
-                                    <td data-label="Strumento">
-                                        <div class="d-flex align-items-center justify-content-end justify-content-md-start">
-                                            <img src="${urlImmagine}" width="40" class="me-3 bg-white rounded">
-                                            <div class="text-end text-md-start">
-                                                <b>${nomeStrumento}</b><br>
-                                                <small class="text-white-50">quantità: ${n.quantità || 1}</small>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td data-label="Periodo"><small>Dal: ${n.data_inizio}<br>Al: ${n.data_finish || n.data_fine}</small></td>
-                                    <td data-label="Rata" class="text-danger fw-bold">€${n.canone_mensile.toFixed(2)}/mese</td>
-                                    <td data-label="Stato"><span class="badge bg-info text-white">${n.stato}</span></td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
-    } catch (error) {
-        console.error("Errore nel caricamento dei noleggi:", error);
+    if (noleggiFiltrati.length === 0) {
+      sectionNoleggi.innerHTML = `
+        <div class="custom-table-container">
+          <h3 class="text-danger font-title mb-4">Gestione Noleggi</h3>
+          <p class="text-secondary text-center py-4">Nessun noleggio attivo.</p>
+        </div>`;
+      return;
     }
+
+    sectionNoleggi.innerHTML = `
+      <div class="custom-table-container">
+        <h3 class="text-danger font-title mb-4">Gestione Noleggi</h3>
+        <div class="table-responsive">
+          <table class="table table-dark table-hover align-middle mb-0">
+            <thead>
+              <tr>
+                <th>ID Noleggio</th>
+                <th>Cliente</th>
+                <th>Strumento</th>
+                <th>Periodo</th>
+                <th>Rata Mensile</th>
+                <th>Stato</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${noleggiFiltrati.map(n => {
+                const prod = prodotti.find(p => p.id === n.id_prodotto);
+                const nomeStrumento = prod ? `${prod.marca} - ${prod.modello}` : 'Strumento sconosciuto';
+                const imgStrumento = prod ? prod.immagine : '';
+
+                // --- VERIFICA SCADENZA DATA ---
+                const stringaDataFine = n.data_finish || n.data_fine;
+                let statoTesto = n.stato || 'Attivo';
+                let badgeClass = 'bg-primary';
+
+                if (stringaDataFine) {
+                  const parti = stringaDataFine.split('/');
+                  if (parti.length === 3) {
+                    // parti[0] = giorno, parti[1] = mese (1-12), parti[2] = anno
+                    const dataFineObj = new Date(
+                      parseInt(parti[2], 10),
+                      parseInt(parti[1], 10) - 1,
+                      parseInt(parti[0], 10)
+                    );
+                    dataFineObj.setHours(23, 59, 59, 999); // Valido fino alla fine della giornata
+
+                    const oggi = new Date();
+
+                    // Se la data odierna ha superato la data di fine, imposta lo stato su 'Scaduto'
+                    if (oggi > dataFineObj && statoTesto.toLowerCase() === 'attivo') {
+                      statoTesto = 'Scaduto';
+                      badgeClass = 'bg-secondary';
+                    }
+                  }
+                }
+
+                return `
+                  <tr>
+                    <td>#${n.id_noleggio}</td>
+                    <td>${n.username}</td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        ${imgStrumento ? `<img src="${imgStrumento}" alt="${nomeStrumento}" style="width: 50px; height: 50px; object-fit: contain;" class="me-2 rounded">` : ''}
+                        <div>
+                          <strong>${nomeStrumento}</strong>
+                          <div class="small text-secondary">quantità: ${n.quantita || 1}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="small">Dal: ${n.data_inizio}</div>
+                      <div class="small">Al: ${stringaDataFine}</div>
+                    </td>
+                    <td>€${n.canone_mensile.toFixed(2)}/mese</td>
+                    <td><span class="badge ${badgeClass} text-uppercase">${statoTesto}</span></td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  } catch (error) {
+    console.error("Errore nel caricamento dei noleggi:", error);
+  }
 }
 
 // 7. RENDERING RICHIESTE FORM (ESCLUSIVO ADMIN)
